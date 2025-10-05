@@ -1,7 +1,13 @@
 package co.za.cput.controller.users;
 
+import co.za.cput.domain.business.Verification;
 import co.za.cput.domain.users.Administrator;
-import co.za.cput.service.users.implementation.AdministratorServiceImpl;
+import co.za.cput.domain.users.Landlord;
+import co.za.cput.dto.admin.AdminDashboardSummary;
+import co.za.cput.dto.admin.LandlordVerificationRequest;
+import co.za.cput.dto.admin.VerificationDecisionRequest;
+import co.za.cput.service.users.IAdministratorService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,16 +18,22 @@ import java.util.List;
 @RequestMapping("/Administrator")
 public class AdministratorController {
 
-    private final AdministratorServiceImpl administratorService;
+    private final IAdministratorService administratorService;
 
     @Autowired
-    public AdministratorController(AdministratorServiceImpl administratorService) {
+    public AdministratorController(IAdministratorService administratorService) {
         this.administratorService = administratorService;
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Administrator> create(@RequestBody Administrator administrator) {
-        Administrator created = administratorService.create(administrator);
+    public ResponseEntity<Administrator> create(@RequestBody Administrator administrator,
+                                                @RequestParam(value = "requestingAdminId", required = false) Long requestingAdminId) {
+        Administrator created;
+        if (requestingAdminId != null) {
+            created = administratorService.createWithAuthorization(administrator, requestingAdminId);
+        } else {
+            created = administratorService.create(administrator);
+        }
         return ResponseEntity.ok(created);
     }
 
@@ -52,5 +64,42 @@ public class AdministratorController {
     @DeleteMapping("/delete/{Id}")
     public void delete(@PathVariable Long Id) {
         administratorService.delete(Id);
+    }
+    @GetMapping("/pending-landlords")
+    public ResponseEntity<List<Landlord>> getPendingLandlords() {
+        List<Landlord> landlords = administratorService.getPendingLandlords();
+        if (landlords == null || landlords.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(landlords);
+    }
+
+    @PutMapping("/landlords/{landlordId}/verification")
+    public ResponseEntity<Landlord> verifyLandlord(@PathVariable Long landlordId,
+                                                   @Valid @RequestBody LandlordVerificationRequest request) {
+        Landlord landlord = administratorService.verifyLandlord(landlordId, request);
+        return ResponseEntity.ok(landlord);
+    }
+
+    @GetMapping("/pending-verifications")
+    public ResponseEntity<List<Verification>> getPendingVerifications() {
+        List<Verification> verifications = administratorService.getPendingVerifications();
+        if (verifications == null || verifications.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(verifications);
+    }
+
+    @PutMapping("/verifications/{verificationId}")
+    public ResponseEntity<Verification> decideOnVerification(@PathVariable Long verificationId,
+                                                             @Valid @RequestBody VerificationDecisionRequest request) {
+        Verification verification = administratorService.decideOnVerification(verificationId, request);
+        return ResponseEntity.ok(verification);
+    }
+
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<AdminDashboardSummary> getDashboardSummary() {
+        AdminDashboardSummary summary = administratorService.getDashboardSummary();
+        return ResponseEntity.ok(summary);
     }
 }
