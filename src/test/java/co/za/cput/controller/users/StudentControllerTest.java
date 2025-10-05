@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -26,7 +27,12 @@ class StudentControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Student";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Student";
+    }
 
     private static final Contact contact = ContactFactory.createContact(
             "Abigail@yahoo.com", "0712345678", "0723456789", true, true,
@@ -43,7 +49,7 @@ class StudentControllerTest {
 
     @Test
     void a_create() {
-        ResponseEntity<Student> response = restTemplate.postForEntity(BASE_URL + "/create", student, Student.class);
+        ResponseEntity<Student> response = restTemplate.postForEntity(baseUrl() + "/create", student, Student.class);
         assertNotNull(response.getBody());
         studentWithId = response.getBody();
         System.out.println("Created student: " + studentWithId);
@@ -51,7 +57,7 @@ class StudentControllerTest {
 
     @Test
     void b_read() {
-        String url = BASE_URL + "/read/" + studentWithId.getStudentID();
+        String url = baseUrl() + "/read/" + studentWithId.getStudentID();
         ResponseEntity<Student> response = restTemplate.getForEntity(url, Student.class);
         assertNotNull(response.getBody());
         System.out.println("Read student: " + response.getBody());
@@ -60,15 +66,15 @@ class StudentControllerTest {
     @Test
     void c_update() {
         Student updated = new Student.Builder().copy(studentWithId).setFundingStatus(Student.FundingStatus.SELF_FUNDED).build();
-        restTemplate.put(BASE_URL + "/update", updated);
-        ResponseEntity<Student> response = restTemplate.getForEntity(BASE_URL + "/read/" + updated.getStudentID(), Student.class);
+        restTemplate.put(baseUrl() + "/update", updated);
+        ResponseEntity<Student> response = restTemplate.getForEntity(baseUrl() + "/read/" + updated.getStudentID(), Student.class);
         assertEquals(Student.FundingStatus.SELF_FUNDED, response.getBody().getFundingStatus());
         System.out.println("Updated student: " + response.getBody());
     }
 
     @Test
     void d_getAllStudents() {
-        ResponseEntity<Student[]> response = restTemplate.getForEntity(BASE_URL + "/getAllStudents", Student[].class);
+        ResponseEntity<Student[]> response = restTemplate.getForEntity(baseUrl() + "/getAllStudents", Student[].class);
         assertNotNull(response.getBody());
         System.out.println("All students: ");
         for (Student s : response.getBody()) {
@@ -78,8 +84,8 @@ class StudentControllerTest {
 
     @Test
     void e_delete() {
-        restTemplate.delete(BASE_URL + "/delete/" + studentWithId.getStudentID());
-        ResponseEntity<Student> response = restTemplate.getForEntity(BASE_URL + "/read/" + studentWithId.getStudentID(), Student.class);
+        restTemplate.delete(baseUrl() + "/delete/" + studentWithId.getStudentID());
+        ResponseEntity<Student> response = restTemplate.getForEntity(baseUrl() + "/read/" + studentWithId.getStudentID(), Student.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }

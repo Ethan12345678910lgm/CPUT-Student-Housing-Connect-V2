@@ -9,6 +9,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -35,12 +36,17 @@ class ReviewControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Review";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Review";
+    }
 
 
     @Test
     void a_create() {
-        String url = BASE_URL + "/create";
+        String url = baseUrl() + "/create";
         ResponseEntity<Review> createReview = this.restTemplate.postForEntity(url, review1, Review.class);
         assertNotNull(createReview.getBody());
         System.out.println("createReview = " + createReview.getBody());
@@ -52,7 +58,7 @@ class ReviewControllerTest {
     @Test
     void b_read() {
         assertNotNull(review_with_ID);
-        String url = BASE_URL + "/read/" + review_with_ID.getReviewID();
+        String url = baseUrl() + "/read/" + review_with_ID.getReviewID();
         ResponseEntity<Review> readReview = this.restTemplate.getForEntity(url, Review.class);
         assertNotNull(readReview.getBody());
         System.out.println("readReview = " + readReview.getBody());
@@ -61,7 +67,7 @@ class ReviewControllerTest {
     @Test
     void c_update() {
         assertNotNull(review_with_ID);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
         Review updateReview = new Review.Builder()
                 .copy(review_with_ID)
                 .setRating(2)
@@ -71,7 +77,7 @@ class ReviewControllerTest {
 
         //verify if the object has been updated.
         ResponseEntity<Review> readReview =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + updateReview.getReviewID(), Review.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + updateReview.getReviewID(), Review.class);
         System.out.println("reading the update review = " + readReview.getBody());
 
         assertNotNull(updateReview);
@@ -83,7 +89,7 @@ class ReviewControllerTest {
     @Test
     void d_getAllReviews() {
         assertNotNull(review_with_ID);
-        String url = BASE_URL + "/getAllReviews";
+        String url = baseUrl() + "/getAllReviews";
         ResponseEntity<Review[]> reviews = this.restTemplate.getForEntity(url, Review[].class);
         assertNotNull(reviews.getBody());
         System.out.println("getAllReviews: ");
@@ -95,12 +101,12 @@ class ReviewControllerTest {
     @Test
     void e_delete() {
         assertNotNull(review_with_ID);
-        String url = BASE_URL + "/delete/" + review_with_ID.getReviewID();
+        String url = baseUrl() + "/delete/" + review_with_ID.getReviewID();
         System.out.println("Deleted review = " + review_with_ID);
         this.restTemplate.delete(url);
 
         ResponseEntity<Review> readReview =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + review_with_ID.getReviewID(), Review.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + review_with_ID.getReviewID(), Review.class);
 
         assertEquals(HttpStatus.NOT_FOUND, readReview.getStatusCode());
         System.out.println("After deletion the status code for readContact is: " + readReview.getStatusCode());

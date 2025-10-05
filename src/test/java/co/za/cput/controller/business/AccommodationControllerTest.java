@@ -10,6 +10,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -22,7 +23,12 @@ class AccommodationControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Accommodation";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Accommodation";
+    }
 
     private Address address = AddressFactory.createAddress(
             "42", "Main Street", "Observatory", "Cape Town", 7925
@@ -46,7 +52,7 @@ class AccommodationControllerTest {
 
     @Test
     void a_create() {
-        String url = BASE_URL + "/create";
+        String url = baseUrl() + "/create";
         ResponseEntity<Accommodation> response = this.restTemplate.postForEntity(url, accommodation1, Accommodation.class);
         assertNotNull(response.getBody());
         accommodation_with_Id = response.getBody();
@@ -56,7 +62,7 @@ class AccommodationControllerTest {
     @Test
     void b_read() {
         assertNotNull(accommodation_with_Id);
-        String url = BASE_URL + "/read/" + accommodation_with_Id.getAccommodationID();
+        String url = baseUrl() + "/read/" + accommodation_with_Id.getAccommodationID();
         ResponseEntity<Accommodation> response = this.restTemplate.getForEntity(url, Accommodation.class);
         assertNotNull(response.getBody());
         System.out.println("Read accommodation: " + response.getBody());
@@ -65,7 +71,7 @@ class AccommodationControllerTest {
     @Test
     void c_update() {
         assertNotNull(accommodation_with_Id);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
         Accommodation updatedAccommodation = new Accommodation.Builder()
                 .copy(accommodation_with_Id)
                 .setRent(4500.00)
@@ -74,7 +80,7 @@ class AccommodationControllerTest {
         this.restTemplate.put(url, updatedAccommodation);
 
         ResponseEntity<Accommodation> response = this.restTemplate.getForEntity(
-                BASE_URL + "/read/" + updatedAccommodation.getAccommodationID(), Accommodation.class);
+                baseUrl() + "/read/" + updatedAccommodation.getAccommodationID(), Accommodation.class);
 
         assertNotNull(response.getBody());
         assertEquals(4500.00, response.getBody().getRent());
@@ -84,7 +90,7 @@ class AccommodationControllerTest {
 
     @Test
     void d_getAllAccommodations() {//THIS TEST IS FAILING BECAUSE OF THE BI-DIRECTIONAL RELATIONSHIP
-        String url = BASE_URL + "/getAllAccommodation";
+        String url = baseUrl() + "/getAllAccommodation";
         ResponseEntity<Accommodation[]> response = this.restTemplate.getForEntity(url, Accommodation[].class);
         assertNotNull(response.getBody());
         System.out.println("All accommodations:");
@@ -96,11 +102,11 @@ class AccommodationControllerTest {
     @Test
     void e_delete() {
         assertNotNull(accommodation_with_Id);
-        String url = BASE_URL + "/delete/" + accommodation_with_Id.getAccommodationID();
+        String url = baseUrl() + "/delete/" + accommodation_with_Id.getAccommodationID();
         this.restTemplate.delete(url);
 
         ResponseEntity<Accommodation> response = this.restTemplate.getForEntity(
-                BASE_URL + "/read/" + accommodation_with_Id.getAccommodationID(), Accommodation.class);
+                baseUrl() + "/read/" + accommodation_with_Id.getAccommodationID(), Accommodation.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         System.out.println("Deleted accommodation with ID: " + accommodation_with_Id.getAccommodationID());
     }

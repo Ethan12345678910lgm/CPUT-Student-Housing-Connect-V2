@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -30,11 +31,16 @@ class ContactControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Contact";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Contact";
+    }
 
     @Test
     void a_create() {
-        String url = BASE_URL + "/create";
+        String url = baseUrl() + "/create";
         ResponseEntity<Contact> createContact = restTemplate.postForEntity(url, contact1, Contact.class);
         assertNotNull(createContact.getBody());
         System.out.println("Created contact: " + createContact.getBody());
@@ -46,7 +52,7 @@ class ContactControllerTest {
     @Test
     void a_read() {
         assertNotNull(contact_with_ID);
-        String url = BASE_URL + "/read/" + contact_with_ID.getContactID();
+        String url = baseUrl() + "/read/" + contact_with_ID.getContactID();
         ResponseEntity<Contact> readContact = restTemplate.getForEntity(url, Contact.class);
         assertNotNull(readContact.getBody());
         System.out.println("Read contact: " + readContact.getBody());
@@ -55,7 +61,7 @@ class ContactControllerTest {
     @Test
     void c_update() {
         /*assertNotNull(contact_with_ID);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
         Contact updateContact = new Contact.Builder()
                 .copy(contact_with_ID)
                 .setIsPhoneVerified(true)
@@ -75,7 +81,7 @@ class ContactControllerTest {
         System.out.println("Updated contact: " + newContact);*/
 
         assertNotNull(contact_with_ID);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
 
         Contact updateContact = new Contact.Builder()
                 .copy(contact_with_ID)
@@ -90,7 +96,7 @@ class ContactControllerTest {
         System.out.println("Update contact after put method: " + updateContact);
 
         ResponseEntity<Contact> readContact =
-                restTemplate.getForEntity(BASE_URL + "/read/" + updateContact.getContactID(), Contact.class);
+                restTemplate.getForEntity(baseUrl() + "/read/" + updateContact.getContactID(), Contact.class);
 
         System.out.println("Read contact after we have read updated contact: " + readContact.getBody());
 
@@ -105,7 +111,7 @@ class ContactControllerTest {
 
     @Test
     void d_getAllContacts() {
-        String url = BASE_URL + "/getAllContacts";
+        String url = baseUrl() + "/getAllContacts";
         ResponseEntity<Contact[]> response = restTemplate.getForEntity(url, Contact[].class);
         assertNotNull(response.getBody());
         System.out.println("Get all contacts: ");
@@ -116,12 +122,12 @@ class ContactControllerTest {
 
     @Test
     void e_delete() {
-        String url = BASE_URL + "/delete/" + contact_with_ID.getContactID();
+        String url = baseUrl() + "/delete/" + contact_with_ID.getContactID();
         this.restTemplate.delete(url);
 
         //verify if the object is deleted.
         ResponseEntity<Contact> readContact =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + contact_with_ID.getContactID(), Contact.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + contact_with_ID.getContactID(), Contact.class);
 
         assertEquals(HttpStatus.NOT_FOUND, readContact.getStatusCode());
         System.out.println("After deletion the status code for readContact is: " + readContact.getStatusCode());

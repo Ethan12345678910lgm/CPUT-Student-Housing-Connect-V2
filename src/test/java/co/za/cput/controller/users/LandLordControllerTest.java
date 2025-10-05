@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -27,7 +28,12 @@ class LandLordControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Landlord";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Landlord";
+    }
 
     private static final Contact contact = ContactFactory.createContact(
             "landlord@example.com", "0721234567", "0731234567", true, false,
@@ -43,7 +49,7 @@ class LandLordControllerTest {
 
     @Test
     void a_create() {
-        ResponseEntity<Landlord> response = restTemplate.postForEntity(BASE_URL + "/create", landlord, Landlord.class);
+        ResponseEntity<Landlord> response = restTemplate.postForEntity(baseUrl() + "/create", landlord, Landlord.class);
         assertNotNull(response.getBody());
         landlordWithId = response.getBody();
         System.out.println("Created landlord: " + landlordWithId);
@@ -51,7 +57,7 @@ class LandLordControllerTest {
 
     @Test
     void b_read() {
-        String url = BASE_URL + "/read/" + landlordWithId.getLandlordID();
+        String url = baseUrl() + "/read/" + landlordWithId.getLandlordID();
         ResponseEntity<Landlord> response = restTemplate.getForEntity(url, Landlord.class);
         assertNotNull(response.getBody());
         System.out.println("Read landlord: " + response.getBody());
@@ -60,15 +66,15 @@ class LandLordControllerTest {
     @Test
     void c_update() {
         Landlord updated = new Landlord.Builder().copy(landlordWithId).setVerified(false).build();
-        restTemplate.put(BASE_URL + "/update", updated);
-        ResponseEntity<Landlord> response = restTemplate.getForEntity(BASE_URL + "/read/" + updated.getLandlordID(), Landlord.class);
+        restTemplate.put(baseUrl() + "/update", updated);
+        ResponseEntity<Landlord> response = restTemplate.getForEntity(baseUrl() + "/read/" + updated.getLandlordID(), Landlord.class);
         assertFalse(response.getBody().isVerified());
         System.out.println("Updated landlord: " + response.getBody());
     }
 
     @Test
     void d_getAllLandlords() {
-        ResponseEntity<Landlord[]> response = restTemplate.getForEntity(BASE_URL + "/getAllLandlords", Landlord[].class);
+        ResponseEntity<Landlord[]> response = restTemplate.getForEntity(baseUrl() + "/getAllLandlords", Landlord[].class);
         assertNotNull(response.getBody());
         System.out.println("All landlords: ");
         for (Landlord l : response.getBody()) {
@@ -78,10 +84,8 @@ class LandLordControllerTest {
 
     @Test
     void e_delete() {
-        restTemplate.delete(BASE_URL + "/delete/" + landlordWithId.getLandlordID());
-        ResponseEntity<Landlord> response = restTemplate.getForEntity(BASE_URL + "/read/" + landlordWithId.getLandlordID(), Landlord.class);
+        restTemplate.delete(baseUrl() + "/delete/" + landlordWithId.getLandlordID());
+        ResponseEntity<Landlord> response = restTemplate.getForEntity(baseUrl() + "/read/" + landlordWithId.getLandlordID(), Landlord.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }
-
-

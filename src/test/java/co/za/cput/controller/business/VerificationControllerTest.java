@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -35,11 +36,16 @@ class VerificationControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Verification";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Verification";
+    }
 
     @Test
     void a_create() {
-        String url = BASE_URL + "/create";
+        String url = baseUrl() + "/create";
         ResponseEntity<Verification> createVerification = this.restTemplate.postForEntity(url, verification1, Verification.class);
         assertNotNull(createVerification.getBody());
         System.out.println("Created verification: " + createVerification.getBody());
@@ -51,7 +57,7 @@ class VerificationControllerTest {
     @Test
     void b_read() {
         assertNotNull(verification_with_Id);
-        String url = BASE_URL + "/read/" + verification_with_Id.getVerificationID();
+        String url = baseUrl() + "/read/" + verification_with_Id.getVerificationID();
         ResponseEntity<Verification> readVerification = this.restTemplate.getForEntity(url, Verification.class);
         assertNotNull(readVerification.getBody());
         System.out.println("Read verification: " + readVerification.getBody());
@@ -60,7 +66,7 @@ class VerificationControllerTest {
     @Test
     void c_update() {
         assertNotNull(verification_with_Id);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
         Verification updatedVerification = new Verification.Builder()
                 .copy(verification_with_Id)
                 .setVerificationDate(LocalDate.of(2025, 7, 15))
@@ -73,7 +79,7 @@ class VerificationControllerTest {
 
         //verify if the object is updated.
         ResponseEntity<Verification> readVerification =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + updatedVerification.getVerificationID(),
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + updatedVerification.getVerificationID(),
                         Verification.class);
         System.out.println("Read verification immediately after updated: " + readVerification.getBody());
 
@@ -89,7 +95,7 @@ class VerificationControllerTest {
     @Test
     void d_getAllVerification() {
         assertNotNull(verification_with_Id);
-        String url = BASE_URL + "/getAllVerification";
+        String url = baseUrl() + "/getAllVerification";
         ResponseEntity<Verification[]> verificationList = this.restTemplate.getForEntity(url, Verification[].class);
         assertNotNull(verificationList.getBody());
         System.out.println("Get all verifications: ");
@@ -101,11 +107,11 @@ class VerificationControllerTest {
     @Test
     void e_delete() {
         assertNotNull(verification_with_Id);
-        String url = BASE_URL + "/delete/" + verification_with_Id.getVerificationID();
+        String url = baseUrl() + "/delete/" + verification_with_Id.getVerificationID();
         this.restTemplate.delete(url);
 
         ResponseEntity<Verification> readVerification =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + verification_with_Id.getVerificationID(),
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + verification_with_Id.getVerificationID(),
                         Verification.class);
         assertEquals(HttpStatus.NOT_FOUND, readVerification.getStatusCode());
         System.out.println("After deletion the status code for readContact is: " + readVerification.getStatusCode());

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -20,7 +21,12 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.MethodName.class)
 class BookingControllerTest {
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Booking";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Booking";
+    }
 
     private Booking booking1 = BookingFactory.createBooking(
             LocalDate.of(2025, 5, 15),
@@ -43,7 +49,7 @@ class BookingControllerTest {
 
     @Test
     void a_create() {
-        String url = BASE_URL + "/create";
+        String url = baseUrl() + "/create";
         ResponseEntity<Booking> createResponse = this.restTemplate.postForEntity(url, booking1, Booking.class);
         assertNotNull(createResponse.getBody());
         System.out.println("Created booking: " + createResponse.getBody());
@@ -54,7 +60,7 @@ class BookingControllerTest {
     @Test
     void b_read() {
         assertNotNull(booking_with_ID);
-        String url = BASE_URL + "/read/" + booking_with_ID.getBookingID();
+        String url = baseUrl() + "/read/" + booking_with_ID.getBookingID();
         ResponseEntity<Booking> readResponse = this.restTemplate.getForEntity(url, Booking.class);
         assertNotNull(readResponse.getBody());
         System.out.println("Read booking: " + readResponse.getBody());
@@ -63,7 +69,7 @@ class BookingControllerTest {
     @Test
     void c_update() {
         assertNotNull(booking_with_ID);
-        String url = BASE_URL + "/update";
+        String url = baseUrl() + "/update";
 
         Booking updatedBooking = new Booking.Builder()
                 .copy(booking_with_ID)
@@ -75,7 +81,7 @@ class BookingControllerTest {
         this.restTemplate.put(url, updatedBooking);
 
         ResponseEntity<Booking> readResponse =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + updatedBooking.getBookingID(), Booking.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + updatedBooking.getBookingID(), Booking.class);
         assertNotNull(readResponse.getBody());
 
         System.out.println("Read booking after update: " + readResponse.getBody());
@@ -87,7 +93,7 @@ class BookingControllerTest {
 
     @Test
     void d_getAllBookings() {
-        String url = BASE_URL + "/getAllBookings";
+        String url = baseUrl() + "/getAllBookings";
         ResponseEntity<Booking[]> response = this.restTemplate.getForEntity(url, Booking[].class);
         assertNotNull(response.getBody());
 
@@ -100,11 +106,11 @@ class BookingControllerTest {
     @Test
     void e_delete() {
         assertNotNull(booking_with_ID);
-        String url = BASE_URL + "/delete/" + booking_with_ID.getBookingID();
+        String url = baseUrl() + "/delete/" + booking_with_ID.getBookingID();
         this.restTemplate.delete(url);
 
         ResponseEntity<Booking> readResponse =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + booking_with_ID.getBookingID(), Booking.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + booking_with_ID.getBookingID(), Booking.class);
         assertEquals(HttpStatus.NOT_FOUND, readResponse.getStatusCode());
         System.out.println("Booking successfully deleted. Status code: " + readResponse.getStatusCode());
     }

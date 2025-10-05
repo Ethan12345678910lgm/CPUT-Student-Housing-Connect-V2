@@ -11,6 +11,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -24,7 +25,12 @@ class AdministratorControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
-    private static final String BASE_URL = "http://localhost:8080/HouseConnect/Administrator";
+    @LocalServerPort
+    private int port;
+
+    private String baseUrl() {
+        return "http://localhost:" + port + "/HouseConnect/Administrator";
+    }
 
     private static final Contact contact = ContactFactory.createContact(
             "admin@gmail.com", "0821234567", "0832345678", true, true,
@@ -39,7 +45,7 @@ class AdministratorControllerTest {
 
     @Test
     void a_create() {
-        ResponseEntity<Administrator> response = this.restTemplate.postForEntity(BASE_URL + "/create", administrator, Administrator.class);
+        ResponseEntity<Administrator> response = this.restTemplate.postForEntity(baseUrl() + "/create", administrator, Administrator.class);
         assertNotNull(response.getBody());
         adminWithId = response.getBody();
         System.out.println("Created admin: " + adminWithId);
@@ -48,7 +54,7 @@ class AdministratorControllerTest {
 
     @Test
     void b_read() {
-        String url = BASE_URL + "/read/" + adminWithId.getAdminID();
+        String url = baseUrl() + "/read/" + adminWithId.getAdminID();
         ResponseEntity<Administrator> response = this.restTemplate.getForEntity(url, Administrator.class);
         assertNotNull(response.getBody());
         System.out.println("Read admin: " + response.getBody());
@@ -60,9 +66,9 @@ class AdministratorControllerTest {
                 .copy(adminWithId)
                 .setAdminRoleStatus(Administrator.AdminRoleStatus.SUSPENDED)
                 .build();
-        this.restTemplate.put(BASE_URL + "/update", updated);
+        this.restTemplate.put(baseUrl() + "/update", updated);
         ResponseEntity<Administrator> response =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + updated.getAdminID(), Administrator.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + updated.getAdminID(), Administrator.class);
         assertEquals(Administrator.AdminRoleStatus.SUSPENDED, response.getBody().getAdminRoleStatus());
         System.out.println("Updated admin: " + response.getBody());
     }
@@ -70,7 +76,7 @@ class AdministratorControllerTest {
     @Test
     void d_getAllAdministrators() {
         ResponseEntity<Administrator[]> response =
-                this.restTemplate.getForEntity(BASE_URL + "/getAllAdministrators", Administrator[].class);
+                this.restTemplate.getForEntity(baseUrl() + "/getAllAdministrators", Administrator[].class);
         assertNotNull(response.getBody());
         System.out.println("All admins: ");
         for (Administrator a : response.getBody()) {
@@ -80,10 +86,9 @@ class AdministratorControllerTest {
 
     @Test
     void e_delete() {
-        restTemplate.delete(BASE_URL + "/delete/" + adminWithId.getAdminID());
+        restTemplate.delete(baseUrl() + "/delete/" + adminWithId.getAdminID());
         ResponseEntity<Administrator> response =
-                this.restTemplate.getForEntity(BASE_URL + "/read/" + adminWithId.getAdminID(), Administrator.class);
+                this.restTemplate.getForEntity(baseUrl() + "/read/" + adminWithId.getAdminID(), Administrator.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }
-
