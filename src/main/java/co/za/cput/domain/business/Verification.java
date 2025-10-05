@@ -25,7 +25,7 @@ public class Verification {
     private VerificationStatus verificationStatus;
 
     public String getVerificationId() {
-        return verificationID.toString();
+        return verificationID != null ? verificationID.toString() : null;
     }
 
     public enum VerificationStatus {

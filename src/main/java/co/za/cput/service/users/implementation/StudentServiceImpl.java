@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public class StudentServiceImpl implements IStudentService {
 
-    private StudentRepository studentRepository;
+    private final StudentRepository studentRepository;
 
     public StudentServiceImpl(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;
@@ -19,21 +19,7 @@ public class StudentServiceImpl implements IStudentService {
 
     @Override
     public Student create(Student student) {
-
-        // Step 1: Save the student without bookings to generate an ID
-        Student studentWithoutBookings = new Student.Builder()
-                .copy(student)
-                .setBookings(null)
-                .build();
-
-        Student savedStudent = studentRepository.save(studentWithoutBookings); // Now has ID
-
-        // Step 2: Attach bookings with the now-persisted student
-        Student studentWithLinkedBookings = LinkingEntitiesHelper.setStudentInBookings(
-                new Student.Builder().copy(student).setStudentID(savedStudent.getStudentID()).build()
-        );
-
-        // Step 3: Save again with linked bookings
+        Student studentWithLinkedBookings = LinkingEntitiesHelper.setStudentInBookings(student);
         return studentRepository.save(studentWithLinkedBookings);
     }
 
@@ -44,15 +30,32 @@ public class StudentServiceImpl implements IStudentService {
 
     @Override
     public Student update(Student student) {
-        // Optional: validate that student exists first
-        if (!studentRepository.existsById(student.getStudentID())) {
+        Student existingStudent = studentRepository.findById(student.getStudentID()).orElse(null);
+        if (existingStudent == null) {
             return null;
         }
 
-        // Link bookings properly
         Student studentWithLinkedBookings = LinkingEntitiesHelper.setStudentInBookings(student);
-        return studentRepository.save(studentWithLinkedBookings);
-    }
+
+        Student updatedStudent = new Student.Builder()
+                .copy(existingStudent)
+                .setStudentName(studentWithLinkedBookings.getStudentName())
+                .setStudentSurname(studentWithLinkedBookings.getStudentSurname())
+                .setDateOfBirth(studentWithLinkedBookings.getDateOfBirth())
+                .setGender(studentWithLinkedBookings.getGender())
+                .setPassword(studentWithLinkedBookings.getPassword())
+                .setRegistrationDate(studentWithLinkedBookings.getRegistrationDate())
+                .setIsStudentVerified(studentWithLinkedBookings.getIsStudentVerified())
+                .setFundingStatus(studentWithLinkedBookings.getFundingStatus())
+                .setContact(studentWithLinkedBookings.getContact() != null
+                        ? studentWithLinkedBookings.getContact()
+                        : existingStudent.getContact())
+                .setBookings(studentWithLinkedBookings.getBookings() != null
+                        ? studentWithLinkedBookings.getBookings()
+                        : existingStudent.getBookings())
+                .build();
+
+        return studentRepository.save(updatedStudent);    }
 
     @Override
     public List<Student> getAllStudents() {

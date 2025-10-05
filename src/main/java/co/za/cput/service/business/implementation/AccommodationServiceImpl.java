@@ -16,13 +16,14 @@ import java.util.List;
 @Service
 public class AccommodationServiceImpl implements IAccommodationService {
 
-    private AccommodationRepository accommodationRepository;
-    private LandLordRepository landLordRepository;
+    private final AccommodationRepository accommodationRepository;
+    private final LandLordRepository landLordRepository;
 
     @Autowired
     public AccommodationServiceImpl(AccommodationRepository accommodationRepository,
                                     LandLordRepository landLordRepository) {
         this.accommodationRepository = accommodationRepository;
+        this.landLordRepository = landLordRepository;
     }
 
     @Override
@@ -38,12 +39,33 @@ public class AccommodationServiceImpl implements IAccommodationService {
 
     @Override
     public Accommodation update(Accommodation accommodation) {
-        if (!accommodationRepository.existsById(accommodation.getAccommodationID())) {
-            return null;
+        Accommodation linkedAccommodation = LinkingEntitiesHelper.linkLandlord(accommodation, landLordRepository);
+
+        Accommodation existingAccommodation = accommodationRepository
+                .findById(accommodation.getAccommodationID())
+                .orElse(null);
+
+        if (existingAccommodation == null) {            return null;
         }
 
-        Accommodation linkedAccommodation = LinkingEntitiesHelper.linkLandlord(accommodation, landLordRepository);
-        return accommodationRepository.save(linkedAccommodation);
+        Accommodation updatedAccommodation = new Accommodation.Builder()
+                .copy(existingAccommodation)
+                .setRent(linkedAccommodation.getRent())
+                .setWifiAvailable(linkedAccommodation.getIsWifiAvailable())
+                .setFurnished(linkedAccommodation.getIsFurnished())
+                .setDistanceFromCampus(linkedAccommodation.getDistanceFromCampus())
+                .setUtilitiesIncluded(linkedAccommodation.getIsUtilitiesIncluded())
+                .setRoomType(linkedAccommodation.getRoomType())
+                .setBathroomType(linkedAccommodation.getBathroomType())
+                .setAccommodationStatus(linkedAccommodation.getAccommodationStatus())
+                .setAddress(linkedAccommodation.getAddress())
+                .setLandlord(linkedAccommodation.getLandlord())
+                .setBookings(linkedAccommodation.getBookings() != null
+                        ? linkedAccommodation.getBookings()
+                        : existingAccommodation.getBookings())
+                .build();
+
+        return accommodationRepository.save(updatedAccommodation);
     }
 
     @Override

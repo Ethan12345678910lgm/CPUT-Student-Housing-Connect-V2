@@ -44,7 +44,7 @@ public class AccommodationController {
         return ResponseEntity.ok(updated);
     }
 
-    @GetMapping("/getAllAccommodations")
+    @GetMapping({"/getAllAccommodations", "/getAllAccommodation"})
     public ResponseEntity<List<Accommodation>> getAllAccommodations() {
         List<Accommodation> all = accommodationService.getAllAccommodations();
         if (all == null || all.isEmpty()) {

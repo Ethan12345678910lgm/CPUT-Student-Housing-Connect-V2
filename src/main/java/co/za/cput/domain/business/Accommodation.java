@@ -229,6 +229,7 @@ public class Accommodation {
             this.distanceFromCampus = accommodation.getDistanceFromCampus();
             this.utilitiesIncluded = accommodation.getIsUtilitiesIncluded();
             this.roomType = accommodation.getRoomType();
+            this.bathroomType = accommodation.getBathroomType();
             this.accommodationStatus = accommodation.getAccommodationStatus();
             this.address = accommodation.getAddress();
             this.landlord = accommodation.getLandlord();
