@@ -78,14 +78,14 @@ public class AdministratorServiceImpl implements IAdministratorService {
                 .build();
 
         return administratorRepository.save(savedAdmin);
+    }
 
-        @Override
-        public Administrator createWithAuthorization(Administrator administrator, Long requestingAdminId) {
-            if (administratorRepository.count() > 0) {
-                requireActiveAdministrator(requestingAdminId);
-            }
-            return create(administrator);
+    @Override
+    public Administrator createWithAuthorization(Administrator administrator, Long requestingAdminId) {
+        if (administratorRepository.count() > 0) {
+            requireActiveAdministrator(requestingAdminId);
         }
+        return create(administrator);
     }
 
     @Override
