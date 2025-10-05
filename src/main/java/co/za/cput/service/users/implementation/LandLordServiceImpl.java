@@ -4,6 +4,7 @@ package co.za.cput.service.users.implementation;
 //Student Number:   221802797.
 
 import co.za.cput.domain.business.Accommodation;
+import co.za.cput.domain.generic.Contact;
 import co.za.cput.domain.users.Landlord;
 import co.za.cput.repository.business.AccommodationRepository;
 import co.za.cput.repository.users.LandLordRepository;
@@ -27,7 +28,7 @@ public class LandLordServiceImpl implements ILandLordService {
                                AccommodationRepository accommodationRepository) {
         this.landLordRepository = landLordRepository;
         this.accommodationRepository = accommodationRepository;
-    }    
+    }
 
     @Override
     @Transactional
@@ -59,13 +60,12 @@ public class LandLordServiceImpl implements ILandLordService {
 
 
 
-
     @Override
     public Landlord read(Long Id) {
         return landLordRepository.findById(Id).orElse(null);
     }
 
-   
+
 
     @Override
     public Landlord update(Landlord landlord) {
@@ -77,8 +77,8 @@ public class LandLordServiceImpl implements ILandLordService {
         Landlord existing = landLordRepository.findById(landlord.getLandlordID())
                 .orElseThrow(() -> new IllegalArgumentException("Landlord not found"));
 
-        // Step 2: Link accommodations to managed landlord
-        List<Accommodation> fixedAccommodations = null;
+        // Step 2: Preserve current relationships when the update payload does not include them
+        List<Accommodation> fixedAccommodations;
         if (landlord.getAccommodationList() != null) {
             fixedAccommodations = landlord.getAccommodationList().stream()
                     .map(acc -> new Accommodation.Builder()
@@ -86,12 +86,33 @@ public class LandLordServiceImpl implements ILandLordService {
                             .setLandlord(existing) // prevent detached instance issue
                             .build())
                     .collect(Collectors.toList());
+        } else {
+            fixedAccommodations = existing.getAccommodationList() != null
+                    ? existing.getAccommodationList()
+                    : new ArrayList<>();
         }
 
-        // Step 3: Rebuild landlord with fixed accommodations
+        Contact updatedContact = landlord.getContact() != null
+                ? landlord.getContact()
+                : existing.getContact();
+
+        // Step 3: Rebuild landlord with fixed relationships
         Landlord updated = new Landlord.Builder()
-                .copy(landlord)
                 .setLandlordID(existing.getLandlordID())
+                .setLandlordFirstName(landlord.getLandlordFirstName() != null
+                        ? landlord.getLandlordFirstName()
+                        : existing.getLandlordFirstName())
+                .setLandlordLastName(landlord.getLandlordLastName() != null
+                        ? landlord.getLandlordLastName()
+                        : existing.getLandlordLastName())
+                .setVerified(landlord.isVerified())
+                .setDateRegistered(landlord.getDateRegistered() != null
+                        ? landlord.getDateRegistered()
+                        : existing.getDateRegistered())
+                .setPassword(landlord.getPassword() != null
+                        ? landlord.getPassword()
+                        : existing.getPassword())
+                .setContact(updatedContact)
                 .setAccommodationList(fixedAccommodations)
                 .build();
 
